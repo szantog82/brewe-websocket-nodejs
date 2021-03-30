@@ -1,0 +1,22 @@
+{
+  "name": "brewe-websocket",
+  "version": "0.0.1",
+  "description": "Websockets for Brew-e app",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.17.1",
+    "websocket": "^1.0.33"
+  },
+  "engines": {
+    "node": "12.x"
+  },
+  "license": "MIT",
+  "keywords": [
+    "node",
+    "glitch",
+    "express"
+  ]
+}
