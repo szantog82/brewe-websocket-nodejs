@@ -4,32 +4,41 @@ const express = require("express");
 const lib = require("./lib.js");
 const app = express();
 
+var json = {"auth" : "8faopcj",
+"message" : "1 macchiato elkészült jöhetsz érte",
+"order_id" : 5,
+"item_id": 8,
+"shop_name": "Espresso Embassy"};
+//https://bold-wind-museum.glitch.me/order_status
+
 app.use(express.json());
 
 var connections = [];
+var messagesBuffer = {
+  "abbab": ["Helló1", "Csáó2", "mizu3"] 
+};
 
-var serverPort = 8080;
-
-const server = app.listen(process.env.PORT || 3000);
+const server = app.listen(process.env.PORT || 8080);
 
 app.get("/", function(req, res) {
     res.end("Hello world");
 });
 
-app.post("/order_status", function(req, res) {
-    var message = "";
-    if (req.body["message"] != undefined) {
-        message = req.body["message"];
+app.post("/send_message", function(req, res) {
+  console.log("Incoming message via POST/send_message: " + req.body["message"]);
+    var auth = req.body["auth"];
+    if (req.body["toAll"]) {
+      connections.forEach(function(item, index) {
+             item.sendUTF(req.body["message"]); 
+        });
     } else {
-        message = JSON.stringify(req.body);
+      connections.forEach(function(item, index) {
+            if (item.id = auth) {
+                item.sendUTF(JSON.stringify(req.body)); 
+            }
+        });
     }
-    console.log(JSON.stringify(req.body));
-    console.log("Sending post message '" + message + "' to everybody");
-    connections.forEach(function(item, index) {
-        item.sendUTF(message);
-        //item.close();
-    });
-    res.end(message + " sent to everybody");
+    res.end();
 });
 
 
@@ -42,6 +51,7 @@ var wsServer = new WebSocketServer({
     // to accept it.
     autoAcceptConnections: false
 });
+
 
 function originIsAllowed(origin) {
     // put logic here to detect whether the specified origin is allowed.
@@ -58,15 +68,23 @@ wsServer.on("request", function(request) {
     }
     console.log("agent: " + request["httpRequest"]["headers"]["user-agent"] + ", origin: " + request.origin);
     var requestArray = lib.convertGetRequestToObject(request["httpRequest"]["url"]);
+
   
     if (requestArray.auth == undefined){
+      console.log("no request auth; rejected");
       request.reject();
       return;
     } else {
      var connection = request.accept(null, request.origin);
-
+    console.log("request auth:" +requestArray.auth);
     connection.id = requestArray.auth;
     connections.push(connection); 
+    console.log(messagesBuffer[connection.id]);
+      if (messagesBuffer[connection.id] != undefined) {
+        messagesBuffer[connection.id].forEach(function(item, index){
+          connection.sendUTF(item);
+        });
+      }
     }
 
     console.log(new Date() + " Connection accepted from " + connection.remoteAddress);
@@ -84,7 +102,6 @@ wsServer.on("request", function(request) {
     });
     connection.on("close", function(reasonCode, description) {
         console.log(new Date() + " Peer " + connection.remoteAddress + " disconnected.");
-        console.log("Connections length before removal: " + connections.length);
         for (var i = 0; i < connections.length; i++) {
             if (connections[i].id === connection.id) {
                 connections.splice(i, 1);
