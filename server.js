@@ -14,7 +14,7 @@ const server = app.listen(process.env.PORT || 8080);
 
 app.get("/", function(req, res) {
     res.statusCode = 302;
-    res.setHeader('Location','www.szantog82.nhely.hu');
+    res.setHeader('Location','http://www.szantog82.nhely.hu');
     res.end();
 });
 
