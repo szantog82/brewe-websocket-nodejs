@@ -20,11 +20,12 @@ app.get("/", function(req, res) {
 app.post("/send_message", function(req, res) {
   console.log("Incoming message via POST/send_message: " + req.body["message"]);
     var auth = req.body["auth"];
-    if (req.body["toAll"]) {
+    if (req.body["toAll"] == 1) {
       connections.forEach(function(item, index) {
              item.sendUTF(req.body["message"]); 
         });
     } else {
+      console.log("sending message to " + auth);
       connections.forEach(function(item, index) {
             if (item.id == auth) {
                 item.sendUTF(JSON.stringify(req.body)); 
