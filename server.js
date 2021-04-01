@@ -13,7 +13,9 @@ var messagesBuffer = {
 const server = app.listen(process.env.PORT || 8080);
 
 app.get("/", function(req, res) {
-    res.end("Hello world");
+    res.statusCode = 302;
+    res.setHeader('Location','www.szantog82.nhely.hu');
+    res.end();
 });
 
 app.post("/send_message", function(req, res) {
