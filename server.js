@@ -4,13 +4,6 @@ const express = require("express");
 const lib = require("./lib.js");
 const app = express();
 
-var json = {"auth" : "8faopcj",
-"message" : "1 macchiato elkészült jöhetsz érte",
-"order_id" : 5,
-"item_id": 8,
-"shop_name": "Espresso Embassy"};
-//https://bold-wind-museum.glitch.me/order_status
-
 app.use(express.json());
 
 var connections = [];
@@ -33,7 +26,7 @@ app.post("/send_message", function(req, res) {
         });
     } else {
       connections.forEach(function(item, index) {
-            if (item.id = auth) {
+            if (item.id == auth) {
                 item.sendUTF(JSON.stringify(req.body)); 
             }
         });
