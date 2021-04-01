@@ -8,8 +8,7 @@ app.use(express.json());
 
 var connections = [];
 var messagesBuffer = {
-  "abbab": ["Helló1", "Csáó2", "mizu3"] 
-};
+  };
 
 const server = app.listen(process.env.PORT || 8080);
 
@@ -20,6 +19,7 @@ app.get("/", function(req, res) {
 app.post("/send_message", function(req, res) {
   console.log("Incoming message via POST/send_message: " + req.body["message"]);
     var auth = req.body["auth"];
+    var success = false;
     if (req.body["toAll"] == 1) {
       connections.forEach(function(item, index) {
              item.sendUTF(req.body["message"]); 
@@ -28,10 +28,17 @@ app.post("/send_message", function(req, res) {
       console.log("sending message to " + auth);
       connections.forEach(function(item, index) {
             if (item.id == auth) {
-                item.sendUTF(req.body["message"]);  
+                item.sendUTF(req.body["message"]);
+                success = true;
             }
         });
     }
+   if (!success){
+    if (messagesBuffer[connection.id] == undefined){
+      messagesBuffer[connection.id] = [];
+    }
+      messagesBuffer[connection.id].push(req.body["message"]);
+   }
     res.end();
 });
 
@@ -70,10 +77,9 @@ wsServer.on("request", function(request) {
       return;
     } else {
      var connection = request.accept(null, request.origin);
-    console.log("request auth:" +requestArray.auth);
+    console.log("request auth: " +requestArray.auth);
     connection.id = requestArray.auth;
     connections.push(connection); 
-    console.log(messagesBuffer[connection.id]);
       if (messagesBuffer[connection.id] != undefined) {
         messagesBuffer[connection.id].forEach(function(item, index){
           connection.sendUTF(item);
@@ -83,16 +89,21 @@ wsServer.on("request", function(request) {
 
     console.log(new Date() + " Connection accepted from " + connection.remoteAddress);
     console.log("Count of connected clients: " + connections.length);
-    connection.sendUTF("Greetings from server");
+  
     connection.on("message", function(message) {
-        if (message.type === "utf8") {
+      //
+      //following section is only for debugging
+      //
+       /* if (message.type === "utf8") {
                 console.log("Received Message: " + message.utf8Data + " (from " + connection.id + ")");
                 connections.forEach(function(item, index) {
                     if (item.id != connection.id) {
                         item.sendUTF(message.utf8Data);
                     }
                 });
-        }
+        }*/
+      //Debugging section end here
+      //
     });
     connection.on("close", function(reasonCode, description) {
         console.log(new Date() + " Peer " + connection.remoteAddress + " disconnected.");
