@@ -28,7 +28,7 @@ app.post("/send_message", function(req, res) {
       console.log("sending message to " + auth);
       connections.forEach(function(item, index) {
             if (item.id == auth) {
-                item.sendUTF(JSON.stringify(req.body)); 
+                item.sendUTF(req.body["message"]);  
             }
         });
     }
