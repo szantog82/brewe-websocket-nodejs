@@ -3,12 +3,29 @@ var http = require("http");
 const express = require("express");
 const lib = require("./lib.js");
 const app = express();
+var mongoose = require('mongoose');
 
 app.use(express.json());
 
 var connections = [];
-var messagesBuffer = {
-  };
+
+var mongodbUri = "mongodb://" + process.env.LOGIN + ":" + process.env.PASSWORD + "@szantog82-shard-00-00.1dmlm.mongodb.net:27017,szantog82-shard-00-01.1dmlm.mongodb.net:27017,szantog82-shard-00-02.1dmlm.mongodb.net:27017/szantog82?ssl=true&replicaSet=atlas-zj6i4v-shard-0&authSource=admin&retryWrites=true&w=majority";
+var messageSchema = mongoose.Schema({
+    auth: String,
+    message: String,
+});
+
+var Message = mongoose.model('Message', messageSchema);
+
+var mongoConn = mongoose.connect(mongodbUri,{ useNewUrlParser: true , useUnifiedTopology: true}, function(error) {
+  console.log("Error connecting to mongoDb: " + error)
+});
+var mongoCollection = mongoose.connection.collection('Messages');
+
+var upload = new Message();
+upload.auth = "auth";
+upload.message = "message"
+
 
 const server = app.listen(process.env.PORT || 8080);
 
@@ -34,12 +51,15 @@ app.post("/send_message", function(req, res) {
                 success = true;
             }
         });
+      if (!success){
+      //
+      //if user was not available, save message to db
+      //
+     var upload = new Message();
+     upload.auth = auth;
+     upload.message = req.body["message"];
+     mongoCollection.insertOne(upload);
     }
-   if (!success){
-    if (messagesBuffer[connection.id] == undefined){
-      messagesBuffer[connection.id] = [];
-    }
-      messagesBuffer[connection.id].push(req.body["message"]);
    }
     res.end();
 });
@@ -82,12 +102,17 @@ wsServer.on("request", function(request) {
     console.log("request auth: " +requestArray.auth);
     connection.id = requestArray.auth;
     connections.push(connection);
-      //connection.sendUTF("Sikeres kapcsolódás a szerverhez!");
-      if (messagesBuffer[connection.id] != undefined) {
-        messagesBuffer[connection.id].forEach(function(item, index){
-          connection.sendUTF(item);
-        });
-      }
+      //
+      //if user was not available, when message was emitted previously
+      //
+      mongoCollection.find({auth: requestArray.auth}, function(err, data) {
+        data.toArray(function(err2, items) {
+            data.forEach(function (item, index){
+              connection.send(item.message);
+            })
+        })
+      })
+      
     }
 
     console.log(new Date() + " Connection accepted from " + connection.remoteAddress);
