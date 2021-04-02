@@ -112,7 +112,7 @@ wsServer.on("request", function(request) {
             })
         })
       })
-      
+      mongoCollection.deleteMany({ auth: requestArray.auth});
     }
 
     console.log(new Date() + " Connection accepted from " + connection.remoteAddress);
