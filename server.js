@@ -82,7 +82,7 @@ wsServer.on("request", function(request) {
     console.log("request auth: " +requestArray.auth);
     connection.id = requestArray.auth;
     connections.push(connection);
-      connection.sendUTF("Sikeres kapcsolódás a szerverhez!");
+      //connection.sendUTF("Sikeres kapcsolódás a szerverhez!");
       if (messagesBuffer[connection.id] != undefined) {
         messagesBuffer[connection.id].forEach(function(item, index){
           connection.sendUTF(item);
