@@ -24,7 +24,7 @@ var mongoCollection = mongoose.connection.collection('Messages');
 
 var upload = new Message();
 upload.auth = "auth";
-upload.message = "message"
+upload.message = "message";
 
 
 const server = app.listen(process.env.PORT || 8080);
@@ -36,7 +36,7 @@ app.get("/", function(req, res) {
 });
 
 app.post("/send_message", function(req, res) {
-  console.log("Incoming message via POST/send_message: " + req.body["message"]);
+  console.log("Incoming message via POST/send_message: " + req.body["message"] + ", auth: " + req.body["auth"] + ", toAll: " + req.body["toAll"]);
     var auth = req.body["auth"];
     var success = false;
     if (req.body["toAll"] == 1) {
@@ -58,7 +58,10 @@ app.post("/send_message", function(req, res) {
      var upload = new Message();
      upload.auth = auth;
      upload.message = req.body["message"];
-     mongoCollection.insertOne(upload);
+     console.log("sending message to " + auth + " failed, saving info to database: " + upload)
+     mongoCollection.insertOne(upload, function(err, ds){
+       console.log("insertion error: " + err);
+     });
     }
    }
     res.end();
@@ -108,11 +111,11 @@ wsServer.on("request", function(request) {
       mongoCollection.find({auth: requestArray.auth}, function(err, data) {
         data.toArray(function(err2, items) {
             data.forEach(function (item, index){
-              connection.send(item.message);
+              connection.sendUTF(item.message);
             })
+          mongoCollection.deleteMany({ auth: requestArray.auth});
         })
       })
-      mongoCollection.deleteMany({ auth: requestArray.auth});
     }
 
     console.log(new Date() + " Connection accepted from " + connection.remoteAddress);
